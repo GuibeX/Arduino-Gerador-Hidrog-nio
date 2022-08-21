@@ -1,0 +1,83 @@
+#include <Stepper.h>;
+
+int passoPorVolta = 32; //quantidade de passos para o motor dar uma volta
+Stepper mp(passosPorVolta, 8, 10, 9, 11);
+
+int pressaoAtual = analogRead(A0);
+int pressaoMinima = 400;
+int pressaoMaxima = 600;
+int pressaoCritica = 900;
+int aberturaSolenoide = 0;
+
+int cursoMotorAtual = 10240;
+int cursoMotorMin = 0;
+int cursoMotorMax = 10240;
+
+
+
+
+void setup()
+{
+  Serial.begin(9600);
+  mp.setSpeed(500);
+  
+  //sensores
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  
+}
+
+void loop()
+{
+  //sensores
+  Serial.print("Pressão atual: ");
+  Serial.println(analogRead(A0));
+  
+  Serial.print("Temperatura reator: ");
+  Serial.println(analogRead(A1));
+  
+  Serial.print("Temperatura motor passo : ");
+  Serial.println(analogRead(A2));
+  
+  //controle de pressao, motor e valvula solenoide
+  if(pressaoAtual <= pressaoMinima)//MINIMA
+  {
+    if(cursoMotorAtual >= cursoMotorMin)
+    {
+  	  mp.step(-2048);
+      
+      cursoMotorAtual += (-2048);
+    }
+  }
+  
+  if(pressaoAtual >= pressaoMaxima)//MAXIMA
+  {
+    if(cursoMotorAtual <= cursoMotorMax)
+    {
+      mp.step(2048);
+      
+      cursoMotorAtual += 2048;
+    }
+  }
+  
+  if(pressaoAtual >= pressaoCritica)//CRITICA
+  {
+    digitalWrite(13, HIGH); 
+    
+    while(cursoMotorAtual <= cursoMotorMax)
+    {      
+    mp.step(2048);
+    }
+    
+    cursoMotorAtual = 10240;
+    
+    delay(1000);
+    digitalWrite(13, LOW); 
+    
+    aberturaSolenoide++; //registra a quant de vezes que atingiu a pressao critica
+  }
+  
+  delay(500);
+  
+}
